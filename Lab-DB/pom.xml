@@ -43,7 +43,7 @@
      <dependency>
         <groupId>org.neo4j.driver</groupId>
         <artifactId>neo4j-java-driver</artifactId>
-        <version>5.15.0</version>  <!-- Usa la última versión disponible -->
+        <version>5.27.0</version>  <!-- Usa la última versión disponible -->
     </dependency>
 
   </dependencies>
