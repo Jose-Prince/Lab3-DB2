@@ -1,9 +1,22 @@
 package com.labdb.app;
 
+import java.util.Map;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.GraphDatabase;
+import com.labdb.app.User;
+import com.labdb.app.Movie;
 
 public class App {
+
+	public static void createUser(Driver driver, User user) {
+		var result = driver.executableQuery("MERGE (u:User {name: $name, userId: $userId})")
+			.withParameters(Map.of("name", user.Name, "userId", user.UserId))
+			.withConfig(QueryConfig.builder().withDatabase("neo4j").build())
+			.execute();
+	}
+
+	public static void createUser(Driver driver, User user) {
+	}
 
     public static void main(String... args) {
 
