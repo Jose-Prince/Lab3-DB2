@@ -15,7 +15,7 @@
       pkgs.mkShell {
         packages = [pkgs.jdk pkgs.maven];
         shellHook = ''
-          alias run="mvn exec:java -Dexec.mainClass='com.mycompany.app.App'"
+          alias run="mvn exec:java -Dexec.mainClass='com.labdb.app.App'"
         '';
       };
   };
