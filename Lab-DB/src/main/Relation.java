@@ -6,7 +6,7 @@ public class relacion {
 
     // Method to concatenate key-value pairs
      // Method to concatenate key-value pairs
-    public void concatenateAttributes(ArrayList<HashMap<String, String>> atributos) {
+    public void concatenateAttributes(HashMap<String, String> atributos) {
         // Initialize an empty string for concatenation
         String concatenatedString = "{ ";
 

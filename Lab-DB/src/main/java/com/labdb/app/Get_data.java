@@ -6,10 +6,10 @@ import java.util.ArrayList;
 public class Nodo {
 
     public String nodo_name;
-    public ArrayList<HashMap<String, String>> atributos;
+    public HashMap<String, String> atributos;
 
     // Method to concatenate key-value pairs
-    public void concatenateAttributes(ArrayList<HashMap<String, String>> atributos) {
+    public void concatenateAttributes(HashMap<String, String> atributos) {
         // Initialize an empty string for concatenation
         String concatenatedString = "{ ";
 
