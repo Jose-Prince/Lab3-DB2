@@ -96,20 +96,20 @@ public static void createGenre(Driver driver, Genre genre) {
 	}
 
 	public static void deleteDB(Driver driver) {
-		driver.executableQuery("MATCH (n)-[r]->(n2) DETACH DELETE n,r,n2")
+		driver.executableQuery("MATCH (n) DETACH DELETE n")
 			.withConfig(QueryConfig.builder().withDatabase("neo4j").build())
 			.execute();
 	}
 
 	public static User findUserBasedOnReview(Driver driver, RatedRelation rel) {
-		var result = driver.executableQuery("MATCH (u:User) -[r:Rated {rating: $rating, timestamp: $timestamp}]->(m:Movie) RETURN u")
+		var result = driver.executableQuery("MATCH (u:User) -[r:Rated {rating: $rating, timestamp: $timestamp}]->(m:Movie) RETURN u.name as name")
 			.withParameters(Map.of("rating", rel.Rating, "timestamp", rel.Timestamp))
 			.withConfig(QueryConfig.builder().withDatabase("neo4j").build())
 			.execute();
 
 		var records = result.records();
 		var r = records.get(0);
-		User user = new User(r.get("name").asString(), r.get("userId").asString());
+		User user = new User(r.get("name").asString(), null);
 
 		return user;
 	}
@@ -260,7 +260,7 @@ final Movie[] movies = new Movie[] {
 
 						System.out.println("Finding user based on review...");
 						var foundUser = findUserBasedOnReview(driver, relations[0]);
-						System.out.println("Found user: " + foundUser.Name + " " + foundUser.UserId);
+						System.out.println("Found user: " + foundUser.Name);
 
 
 
