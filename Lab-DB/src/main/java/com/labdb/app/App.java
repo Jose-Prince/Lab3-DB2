@@ -4,6 +4,7 @@ import java.util.Map;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.GraphDatabase;
 import org.neo4j.driver.QueryConfig;
+import org.neo4j.driver.Driver;
 import com.labdb.app.User;
 import com.labdb.app.Movie;
 import java.util.ArrayList;
@@ -25,10 +26,29 @@ public class App {
 	}
 
 	public static void createRatedConnection(Driver driver, User user, Movie movie, RatedRelation relation) {
-		var result = driver.executableQuery("MATCH (m:Movie {title: $title, movieId: $movieId, year: $year, plot: $plot}), (u:User {name: $name, userId: $userId}) CREATE (u)-[r:Rated {rating: $rating, timestamp: $timestamp}]")
+		var result = driver.executableQuery("MATCH (m:Movie {title: $title, movieId: $movieId, year: $year, plot: $plot}), (u:User {name: $name, userId: $userId}) CREATE (u)-[r:Rated {rating: $rating, timestamp: $timestamp}]->(m)")
 			.withParameters(Map.of("title", movie.Title, "movieId", movie.MovieId, "year", movie.Year, "plot", movie.Plot, "name", user.Name, "userId", user.UserId, "rating", relation.Rating, "timestamp", relation.Timestamp))
 			.withConfig(QueryConfig.builder().withDatabase("neo4j").build())
 			.execute();
+	}
+
+	public static void deleteDB(Driver driver) {
+		driver.executableQuery("MATCH (n)-[r]->(n2) DETACH DELETE n,r,n2")
+			.withConfig(QueryConfig.builder().withDatabase("neo4j").build())
+			.execute();
+	}
+
+	public static User findUserBasedOnReview(Driver driver, RatedRelation rel) {
+		var result = driver.executableQuery("MATCH (u:User) -[r:Rated {rating: $rating, timestamp: $timestamp}]->(m:Movie) RETURN u")
+			.withParameters(Map.of("rating", rel.Rating, "timestamp", rel.Timestamp))
+			.withConfig(QueryConfig.builder().withDatabase("neo4j").build())
+			.execute();
+
+		var records = result.records();
+		var r = records.get(0);
+		User user = new User(r.get("name").asString(), r.get("userId").asString());
+
+		return user;
 	}
 
     public static void main(String... args) {
@@ -145,6 +165,9 @@ public class App {
             driver.verifyConnectivity();
             System.out.println("Connection established.");
 
+            System.out.println("Deleting DB...");
+						deleteDB(driver);
+
 						final User[] users = new User[] {
 							new User("Flavio", "12345"),
 							new User("Jose", "668"),
@@ -153,23 +176,44 @@ public class App {
 							new User("Juan", "8765"),
 						};
 
-            System.out.println("Creating users...");
-						for (int i = 0; i< users.length; i++) {
-							createUser(driver, users[i]);
-						}
+						final RatedRelation[] relations = new RatedRelation[] {
+							new RatedRelation(3, 1234556),
+							new RatedRelation(4, 432343),
+							new RatedRelation(1, 98787656),
+							new RatedRelation(5, 12323454),
+							new RatedRelation(2, 123323454),
+							new RatedRelation(5, 12323),
+							new RatedRelation(3, 87986745),
+							new RatedRelation(4, 87673454),
+							new RatedRelation(5, 9806752),
+							new RatedRelation(4, 98012342),
+						};
 
 						final Movie[] movies = new Movie[] {
 							new Movie("The Watchmen", 76, 2015, "Random Movie 1"),
 							new Movie("The Lego Movie", 30, 2005, "Random Movie 2"),
 						};
 
+            System.out.println("Creating users...");
+						for (int i = 0; i< users.length; i++) {
+							createUser(driver, users[i]);
+						}
+
             System.out.println("Creating movies...");
 						for (int i = 0; i< movies.length; i++) {
 							createMovie(driver, movies[i]);
 						}
 
-            
+            System.out.println("Creating relations...");
+						for (int i = 0; i< relations.length; i++) {
+							int userIdx = (i >= users.length) ? i % users.length : i;
+							int moviesIdx = (i >= movies.length) ? i % movies.length : i;
+							createRatedConnection(driver, users[userIdx], movies[moviesIdx], relations[i]);
+						}
 
+						System.out.println("Finding user based on review...");
+						var foundUser = findUserBasedOnReview(driver, relations[0]);
+						System.out.println("Found user: " + foundUser.Name + " " + foundUser.UserId);
         }
     }
 }
