@@ -1,7 +1,11 @@
 package com.labdb.app;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import static java.util.Map.entry;
 
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
@@ -11,30 +15,30 @@ import org.neo4j.driver.QueryConfig;
 public class App {
 
 
-    public static String concatenateAttributes(HashMap<String, String> atributos) {
-        // Initialize an empty string for concatenation
-        StringBuilder concatenatedString = new StringBuilder("{ ");
+    // public static String concatenateAttributes(HashMap<String, String> atributos) {
+    //     // Initialize an empty string for concatenation
+    //     StringBuilder concatenatedString = new StringBuilder("{ ");
 
-        // Iterate over each key-value pair in the HashMap
-        for (Map.Entry<String, String> entry : atributos.entrySet()) {
-            concatenatedString.append(entry.getKey()).append(": ").append(entry.getValue()).append(", ");
-        }
+    //     // Iterate over each key-value pair in the HashMap
+    //     for (Map.Entry<String, String> entry : atributos.entrySet()) {
+    //         concatenatedString.append(entry.getKey()).append(": ").append(entry.getValue()).append(", ");
+    //     }
 
-        // Remove the last ", " if the string is not empty
-        if (concatenatedString.length() > 2) {
-            concatenatedString.setLength(concatenatedString.length() - 2);
-        }
-        concatenatedString.append(" }");
-        return concatenatedString.toString();
-    }
+    //     // Remove the last ", " if the string is not empty
+    //     if (concatenatedString.length() > 2) {
+    //         concatenatedString.setLength(concatenatedString.length() - 2);
+    //     }
+    //     concatenatedString.append(" }");
+    //     return concatenatedString.toString();
+    // }
 
-    public static void creategen(Driver driver, String node_name, String node_name_att, String relation, String relation_att ,String node_namefinal, String node_name_attfinal) {
-    var result = driver.executableQuery("MATCH (m:" + node_name + " " + node_name_att + "), " +
-                            "(u:" + node_namefinal + " " + node_name_attfinal + ") " +
-                            "CREATE (u)-[r:" + relation + " " + relation_att + "]->(m)")
-    .withConfig(QueryConfig.builder().withDatabase("neo4j").build())
-    .execute();
-	}
+  // public static void creategen(Driver driver, String node_name, String node_name_att, String relation, String relation_att ,String node_namefinal, String node_name_attfinal) {
+  //   var result = driver.executableQuery("MATCH (m:" + node_name + " " + node_name_att + "), " +
+  //                           "(u:" + node_namefinal + " " + node_name_attfinal + ") " +
+  //                           "CREATE (u)-[r:" + relation + " " + relation_att + "]->(m)")
+  //   .withConfig(QueryConfig.builder().withDatabase("neo4j").build())
+  //   .execute();
+	// }
 
 
 
@@ -46,11 +50,43 @@ public class App {
 	}
 
 	public static void createMovie(Driver driver, Movie movie) {
-		var result = driver.executableQuery("MERGE (u:Movie {title: $title, movieId: $movieId, year: $year, plot: $plot})")
-			.withParameters(Map.of("title", movie.Title, "movieId", movie.MovieId, "year", movie.Year, "plot", movie.Plot))
-			.withConfig(QueryConfig.builder().withDatabase("neo4j").build())
-			.execute();
-	}
+    var result = driver.executableQuery(
+        "MERGE (u:Movie {title: $title, tmdbId: $tmdbId, release: $release, imdbRating: $imdbRating, " +
+        "movieId: $movieId, year: $year, imdbId: $imdbId, runtime: $runtime, countries: $countries, " +
+        "imdbVotes: $imdbVotes, url: $url, revenue: $revenue, plot: $plot, poster: $poster, " +
+        "budget: $budget, languages: $languages})"
+    )
+    .withParameters(Map.ofEntries(
+      entry("title", movie.Title),
+      entry("tmdbId", movie.tmdbld),
+      entry("release", movie.release),
+      entry("imdbRating", movie.IMDRating),
+      entry("movieId", movie.MovieId),
+      entry("year", movie.Year),
+      entry("imdbId", movie.imdbid),
+      entry("runtime", movie.runtime),
+      entry("countries", movie.countries),
+      entry("imdbVotes", movie.imdbVotes),
+      entry("url", movie.url),
+      entry("revenue", movie.revenue),
+      entry("plot", movie.Plot),
+      entry("poster", movie.poster),
+      entry("budget", movie.budget),
+      entry("languages", movie.languages)
+    ))
+    .withConfig(QueryConfig.builder().withDatabase("neo4j").build())
+    .execute();
+}
+
+public static void createGenre(Driver driver, Genre genre) {
+  var result = driver.executableQuery(
+    "Merge (u:Genre {name: $name})"
+  ).withParameters(Map.of(
+    "name", genre.name
+  ))
+  .withConfig(QueryConfig.builder().withDatabase("neo4j").build())
+  .execute();
+}
 
 	public static void createRatedConnection(Driver driver, User user, Movie movie, RatedRelation relation) {
 		var result = driver.executableQuery("MATCH (m:Movie {title: $title, movieId: $movieId, year: $year, plot: $plot}), (u:User {name: $name, userId: $userId}) CREATE (u)-[r:Rated {rating: $rating, timestamp: $timestamp}]->(m)")
@@ -78,6 +114,63 @@ public class App {
 		return user;
 	}
 
+  public static void createPerson(Driver driver, String pType, Person person) {
+    driver.executableQuery("MERGE (:"+pType+" {name: $name, tmdbid: $tmdbid, born: $born, died: $died, bornIn: $bornIn, url: $url, imdbId: $imdbId, bio: $bio, poster: $poster})")
+      .withParameters(Map.of("name", person.Name, "tmdbid", person.TMDBId, "born", person.Born, "died", person.Died, "bornIn", person.BornIn, "url", person.Url, "imdbId", person.IMDBId, "bio", person.Bio, "poster", person.Poster))
+      .withConfig(QueryConfig.builder().withDatabase("neo4j").build())
+      .execute();
+  }
+
+  public static void createPersonMovieRelation(Driver driver, Person person, Movie movie, String role, String personNodeType, String relationType) {
+    driver.executableQuery("MATCH (u:"+personNodeType+" {name: $name, tmdbid: $tmdbid, born: $born, died: $died, bornIn: $bornIn, url: $urlPerson, imdbId: $imdbIdPerson, bio: $bio, poster: $posterPerson}), (u:Movie {title: $title, tmdbId: $tmdbId, release: $release, imdbRating: $imdbRating, " +
+        "movieId: $movieId, year: $year, imdbId: $imdbId, runtime: $runtime, countries: $countries, " +
+        "imdbVotes: $imdbVotes, url: $url, revenue: $revenue, plot: $plot, poster: $poster, " +
+        "budget: $budget, languages: $languages}) CREATE (u)-[:"+relationType+" {role: $role}]->(m)")
+      .withParameters(Map.ofEntries(
+        entry("name", person.Name),
+        entry("tmdbid", person.TMDBId),
+        entry("born", person.Born),
+        entry("died", person.Died),
+        entry("bornIn", person.BornIn),
+        entry("urlPerson", person.Url),
+        entry("imdbIdPerson", person.IMDBId),
+        entry("bio", person.Bio),
+        entry("posterPerson", person.Poster),
+        entry("title", movie.Title),
+        entry("tmdbId", movie.tmdbld),
+        entry("release", movie.release),
+        entry("imdbRating", movie.IMDRating),
+        entry("movieId", movie.MovieId),
+        entry("year", movie.Year),
+        entry("imdbId", movie.imdbid),
+        entry("runtime", movie.runtime),
+        entry("countries", movie.countries),
+        entry("imdbVotes", movie.imdbVotes),
+        entry("url", movie.url),
+        entry("revenue", movie.revenue),
+        entry("plot", movie.Plot),
+        entry("poster", movie.poster),
+        entry("budget", movie.budget),
+        entry("languages", movie.languages),
+        entry("role", role)
+      ))
+      .withConfig(QueryConfig.builder().withDatabase("neo4j").build())
+      .execute();
+  }
+
+  public static void createMovieGenreRelation(Driver driver, Movie movie, Genre genre, String relationType) {
+    driver.executableQuery("MATCH (m:Movie {title: $title, tmdbId: $tmdbId}), " +
+            "(g:Genre {name: $genreName}) " +
+            "CREATE (m)-[:" + relationType + "]->(g)")
+        .withParameters(Map.ofEntries(
+            entry("title", movie.Title),
+            entry("tmdbId", movie.tmdbld),
+            entry("genreName", genre.name)
+        ))
+        .withConfig(QueryConfig.builder().withDatabase("neo4j").build())
+        .execute();
+}
+
     public static void main(String... args) {
 
         // URI examples: "neo4j://localhost", "neo4j+s://xxx.databases.neo4j.io"
@@ -85,114 +178,14 @@ public class App {
         final String dbUser = "neo4j";
         final String dbPassword = "w2x6GKnBbaGXq8xMUO-Jxm_lQfYWYATgImJRrXIfCs8";
 
-        HashMap<String, String> personAttributes = new HashMap<>();
-        String nodo_name1 = "Person (Actor/Director)";
-
-        personAttributes.put("name", "John Doe");
-        personAttributes.put("tmdbid", "12345");  // Integer value
-        personAttributes.put("born", "2024");  // Date object representing birth time
-        personAttributes.put("died", "Na");  // Died might be null if still alive
-        personAttributes.put("bornin", "New York");
-        personAttributes.put("url", "https://www.example.com");
-        personAttributes.put("imdbid", "67890");  // Integer value for IMDb ID
-        personAttributes.put("bio", "John Doe is an actor known for his roles in movies.");
-        personAttributes.put("poster", "https://www.example.com/johndoe.jpg");
-
-
-
-
-       
-        String nodo_name12 = "Actor";
-        HashMap<String, String> personAttributesA = new HashMap<>();
-        personAttributesA.put("name", "John Doe");
-        personAttributesA.put("tmdbid", "12345");  // Integer value
-        personAttributesA.put("born", "2024");  // Date object representing birth time
-        personAttributesA.put("died", "NA");  // Died might be null if still alive
-        personAttributesA.put("bornin", "New York");
-        personAttributesA.put("url", "https://www.example.com");
-        personAttributesA.put("imdbid", "67890");  // Integer value for IMDb ID
-        personAttributesA.put("bio", "John Doe is an actor known for his roles in movies.");
-        personAttributesA.put("poster", "https://www.example.com/johndoe.jpg");
-
-
-  
-        String nodo_name13 = "Person (Director)";
-        HashMap<String, String> personAttributesD = new HashMap<>();
-        personAttributesD.put("name", "John Doe");
-        personAttributesD.put("tmdbid", "1231245");  
-        personAttributesD.put("born", "2024");  // Date object representing birth time
-        personAttributesD.put("died", "NA");  // Died might be null if still alive
-        personAttributesD.put("bornin", "New York");
-        personAttributesD.put("url", "https://www.example.com");
-        personAttributesD.put("imdbid", "67890");  // Integer value for IMDb ID
-        personAttributesD.put("bio", "John Doe is an actor known for his roles in movies.");
-        personAttributesD.put("poster", "https://www.example.com/johndoe.jpg");
-
-
-
-        String nodo_name14 = "Movie";
-        HashMap<String, String> movieAttributes = new HashMap<>();
-        // Adding key-value pairs
-        movieAttributes.put("title", "Inception");  // String
-        movieAttributes.put("tmdbid", "12345");  // Integer
-        movieAttributes.put("released", "2025");  // Date (datetime)
-        movieAttributes.put("imdbRating", "8.8");  // Decimal (0-10)
-        movieAttributes.put("movield", "67890");  // Integer
-        movieAttributes.put("year", "2010");  // Integer
-        movieAttributes.put("imdbid", "456789");  // Integer
-        movieAttributes.put("runtime", "148");  // Integer (minutes)
-        movieAttributes.put("countries", "USA, UK");  // List of strings
-        movieAttributes.put("imdbVotes", "2000000");  // Integer
-        movieAttributes.put("url", "https://www.example.com/inception");  // String
-        movieAttributes.put("revenue", "829895144");  // Integer
-        movieAttributes.put("plot", "A mind-bending thriller by Christopher Nolan.");  // String
-        movieAttributes.put("poster", "https://www.example.com/inception.jpg");  // String
-        movieAttributes.put("languages","English, French");  // List of strings
-        movieAttributes.put("budget", "160000000");  // Integer
-
-
-   
-        String nodo_name145 = "Genre";
-        HashMap<String, String> personAttributesG = new HashMap<>();
-        personAttributesG.put("genre", "Accion");
-
-
-
-        String nodo_name146 = "User";
-        HashMap<String, String> useratt = new HashMap<>();
-        useratt.put("nombre", "juan");
-        useratt.put("userid", "21");
-
-
-
-        HashMap<String, String> relacted = new HashMap<>();
-        relacted.put("role", "string");
-        String relacion1 = "ACTED_IN";
-
-
-
-        String DIRECTED = "DIRECTED";
-         HashMap<String, String> EC = new HashMap<>();
-        EC.put("role", "string");
-
-
-         String rated = "RATED";
-            HashMap<String, String> ratin = new HashMap<>();
-        EC.put("rating", "0.5");
-        EC.put("timestamp", "2024-12-1");
-
-
-        String genre = "in_genre";
-
-
-
-
         try (var driver = GraphDatabase.driver(dbUri, AuthTokens.basic(dbUser, dbPassword))) {
             driver.verifyConnectivity();
             System.out.println("Connection established.");
 
             System.out.println("Deleting DB...");
 						deleteDB(driver);
+
+            System.out.println("Exercise 1!");
 
 						final User[] users = new User[] {
 							new User("Flavio", "12345"),
@@ -215,10 +208,38 @@ public class App {
 							new RatedRelation(4, 98012342),
 						};
 
-						final Movie[] movies = new Movie[] {
-							new Movie("The Watchmen", 76, 2015, "Random Movie 1"),
-							new Movie("The Lego Movie", 30, 2005, "Random Movie 2"),
-						};
+final Movie[] movies = new Movie[] {
+    new Movie(
+        "Cyber Warriors", 101, LocalDate.of(2022, 5, 15), 7.8f, 1, 2022, 
+        98765, 120, List.of("USA", "Canada"), 15000, "https://example.com/cyber-warriors", 
+        500000000, "A futuristic battle between AI and humans.", "https://example.com/poster1.jpg", 
+        200000000, List.of("English", "French")
+    ),
+    new Movie(
+        "Galaxy Pirates", 205, LocalDate.of(2018, 8, 21), 6.9f, 2, 2018, 
+        87654, 110, List.of("UK", "Australia"), 8000, "https://example.com/galaxy-pirates", 
+        350000000, "A group of space outlaws searches for the ultimate treasure.", "https://example.com/poster2.jpg", 
+        150000000, List.of("English", "Spanish")
+    ),
+    new Movie(
+        "Dinosaur Invasion", 309, LocalDate.of(2010, 3, 10), 5.5f, 3, 2010, 
+        76543, 95, List.of("USA", "Mexico"), 5000, "https://example.com/dinosaur-invasion", 
+        200000000, "A secret experiment brings dinosaurs back to modern times.", "https://example.com/poster3.jpg", 
+        100000000, List.of("English")
+    ),
+    new Movie(
+        "Quantum Thieves", 412, LocalDate.of(2023, 11, 5), 8.2f, 4, 2023, 
+        65432, 130, List.of("Germany", "Japan"), 12000, "https://example.com/quantum-thieves", 
+        600000000, "A team of thieves uses quantum technology to steal the impossible.", "https://example.com/poster4.jpg", 
+        250000000, List.of("English", "Japanese")
+    ),
+    new Movie(
+        "Shadow Samurai", 528, LocalDate.of(2007, 6, 30), 7.0f, 5, 2007, 
+        54321, 105, List.of("Japan", "South Korea"), 7000, "https://example.com/shadow-samurai", 
+        300000000, "An ancient warrior fights against a corrupt empire.", "https://example.com/poster5.jpg", 
+        180000000, List.of("Japanese", "Korean")
+    )
+};
 
             System.out.println("Creating users...");
 						for (int i = 0; i< users.length; i++) {
@@ -243,32 +264,91 @@ public class App {
 
 
 
-           System.out.println("Inciso 4...");
-           String pers = concatenateAttributes(personAttributes);
-           String d = concatenateAttributes(personAttributesD);
+           System.out.println("Exercise 2!");
+           final Person[] persons = new Person[] {
+            new Person("Flavio", 12343, LocalDateTime.now(), LocalDateTime.now(), "Guatemala", "www.google.com", "ABCD", "laksjdflkajsdlkfjasd", "ABC"),
+            new Person("Jose", 2334, LocalDateTime.now(), LocalDateTime.now(), "Guatemala", "www.google.com", "ABCD", "laksjdflkajsdlkfjasd", "ABC"),
+            new Person("Andre", 9867, LocalDateTime.now(), LocalDateTime.now(), "Guatemala", "www.google.com", "ABCD", "laksjdflkajsdlkfjasd", "ABC"),
+           };
 
-          
-          String s = concatenateAttributes(personAttributesA);
-          String mv = concatenateAttributes(movieAttributes);
-          String genresss = concatenateAttributes(personAttributesG);
+           for (int index = 0; index < persons.length; index++) {
+            var pType = "";
+            switch (index) {
+              case 0:
+                pType = "PersonActorDirector";
+                break;
+              case 1:
+                pType = "PersonActor";
+                break;
+              case 2:
+                pType = "PersonDirector";
+                break;
+            
+              default:
+                break;
+            }
 
-          String userss = concatenateAttributes(useratt);
-          String rel = concatenateAttributes(relacted);
-          String ec = concatenateAttributes(EC);
-          String rat = concatenateAttributes(ratin);
+            createPerson(driver, pType, persons[index]);
+           }
+
+          createUser(driver, new User("ElrohirGT", "USER1"));
+          createMovie(driver, new Movie(
+            "Galaxy Pirates 2", 205, LocalDate.of(2018, 8, 21), 6.9f, 2, 2018, 
+        87654, 110, List.of("UK", "Australia"), 8000, "https://example.com/galaxy-pirates", 
+        350000000, "A group of space outlaws searches for the ultimate treasure.", "https://example.com/poster2.jpg", 
+        150000000, List.of("English", "Spanish")
+          ));
 
 
+          createPersonMovieRelation(driver,   
+          persons[0],
+          new Movie(
+            "Galaxy Pirates 2", 205, LocalDate.of(2018, 8, 21), 6.9f, 2, 2018, 
+        87654, 110, List.of("UK", "Australia"), 8000, "https://example.com/galaxy-pirates", 
+        350000000, "A group of space outlaws searches for the ultimate treasure.", "https://example.com/poster2.jpg", 
+        150000000, List.of("English", "Spanish")
+          ), "director_actor", "ActorDirector", "Directed_IN");
+          createPersonMovieRelation(driver,   
+           persons[0],
+          new Movie(
+            "Galaxy Pirates 2", 205, LocalDate.of(2018, 8, 21), 6.9f, 2, 2018, 
+        87654, 110, List.of("UK", "Australia"), 8000, "https://example.com/galaxy-pirates", 
+        350000000, "A group of space outlaws searches for the ultimate treasure.", "https://example.com/poster2.jpg", 
+        150000000, List.of("English", "Spanish")
+          ), "director_actor", "ActorDirector", "Acted_IN");
+          createPersonMovieRelation(driver,   
+            persons[1],
+            new Movie(
+            "Galaxy Pirates 2", 205, LocalDate.of(2018, 8, 21), 6.9f, 2, 2018, 
+        87654, 110, List.of("UK", "Australia"), 8000, "https://example.com/galaxy-pirates", 
+        350000000, "A group of space outlaws searches for the ultimate treasure.", "https://example.com/poster2.jpg", 
+        150000000, List.of("English", "Spanish")
+          ), "Actor", "Actor", "Acted_In");
+          createPersonMovieRelation(driver,   
+          new Person("Flavio", 12343, LocalDateTime.now(), LocalDateTime.now(), "Guatemala", "www.google.com", "ABCD", "laksjdflkajsdlkfjasd", "ABC"),
+          new Movie(
+            "Galaxy Pirates 2", 205, LocalDate.of(2018, 8, 21), 6.9f, 2, 2018, 
+        87654, 110, List.of("UK", "Australia"), 8000, "https://example.com/galaxy-pirates", 
+        350000000, "A group of space outlaws searches for the ultimate treasure.", "https://example.com/poster2.jpg", 
+        150000000, List.of("English", "Spanish")
+          ), "director_actor", "ActorDirector", "Acted_IN");
+          createPersonMovieRelation(driver,   
+          persons[2],
+          new Movie(
+            "Galaxy Pirates 2", 205, LocalDate.of(2018, 8, 21), 6.9f, 2, 2018, 
+        87654, 110, List.of("UK", "Australia"), 8000, "https://example.com/galaxy-pirates", 
+        350000000, "A group of space outlaws searches for the ultimate treasure.", "https://example.com/poster2.jpg", 
+        150000000, List.of("English", "Spanish")
+          ), "Director", "Director", "Directed_in");
 
+          createGenre(driver, new Genre("Adventure"));
 
-          creategen(driver, nodo_name1, pers, DIRECTED, ec, nodo_name14, mv);
-          creategen(driver, nodo_name1, pers, relacion1, rel, nodo_name14, mv);
-
-          creategen(driver, nodo_name13, d, DIRECTED, ec, nodo_name14, mv);
-          creategen(driver, nodo_name12, s, relacion1, rel, nodo_name14, mv);
-
-          creategen(driver, nodo_name146, userss, rated, rat, nodo_name14, mv);
-
-          creategen(driver, nodo_name14, mv, genre, "", nodo_name145, genresss);
+          createMovieGenreRelation(driver, new Movie(
+            "Galaxy Pirates 2", 205, LocalDate.of(2018, 8, 21), 6.9f, 2, 2018, 
+        87654, 110, List.of("UK", "Australia"), 8000, "https://example.com/galaxy-pirates", 
+        350000000, "A group of space outlaws searches for the ultimate treasure.", "https://example.com/poster2.jpg", 
+        150000000, List.of("English", "Spanish")
+          ), new Genre("Adventure"), "in_genre");
 
         }
     }
