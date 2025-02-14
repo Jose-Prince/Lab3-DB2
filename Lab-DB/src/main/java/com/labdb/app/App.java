@@ -1,19 +1,42 @@
 package com.labdb.app;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.neo4j.driver.AuthTokens;
+import org.neo4j.driver.Driver;
 import org.neo4j.driver.GraphDatabase;
 import org.neo4j.driver.QueryConfig;
-import org.neo4j.driver.Driver;
-
-import com.labdb.app.User;
-import com.labdb.app.Movie;
-
-import java.util.ArrayList;
-import java.util.HashMap;
 
 public class App {
+
+
+    public static String concatenateAttributes(HashMap<String, String> atributos) {
+        // Initialize an empty string for concatenation
+        StringBuilder concatenatedString = new StringBuilder("{ ");
+
+        // Iterate over each key-value pair in the HashMap
+        for (Map.Entry<String, String> entry : atributos.entrySet()) {
+            concatenatedString.append(entry.getKey()).append(": ").append(entry.getValue()).append(", ");
+        }
+
+        // Remove the last ", " if the string is not empty
+        if (concatenatedString.length() > 2) {
+            concatenatedString.setLength(concatenatedString.length() - 2);
+        }
+        concatenatedString.append(" }");
+        return concatenatedString.toString();
+    }
+
+    public static void creategen(Driver driver, String node_name, String node_name_att, String relation, String relation_att ,String node_namefinal, String node_name_attfinal) {
+    var result = driver.executableQuery("MATCH (m:" + node_name + " " + node_name_att + "), " +
+                            "(u:" + node_namefinal + " " + node_name_attfinal + ") " +
+                            "CREATE (u)-[r:" + relation + " " + relation_att + "]->(m)")
+    .withConfig(QueryConfig.builder().withDatabase("neo4j").build())
+    .execute();
+	}
+
+
 
 	public static void createUser(Driver driver, User user) {
 		var result = driver.executableQuery("MERGE (u:User {name: $name, userId: $userId})")
@@ -93,7 +116,7 @@ public class App {
 
 
   
-        String nodo_name13 = "Person (Actor/Director)";
+        String nodo_name13 = "Person (Director)";
         HashMap<String, String> personAttributesD = new HashMap<>();
         personAttributesD.put("name", "John Doe");
         personAttributesD.put("tmdbid", "1231245");  
@@ -130,7 +153,7 @@ public class App {
 
    
         String nodo_name145 = "Genre";
-        HashMap<String, String> personAttributesG = new HashMap<String, String>();
+        HashMap<String, String> personAttributesG = new HashMap<>();
         personAttributesG.put("genre", "Accion");
 
 
@@ -142,30 +165,25 @@ public class App {
 
 
 
-        HashMap<String, String> relacted = new HashMap<String, String>();
+        HashMap<String, String> relacted = new HashMap<>();
         relacted.put("role", "string");
-     
         String relacion1 = "ACTED_IN";
-           Relacion relacion1d = new Relacion(relacion1);
-         relacion1d.setAtributos(relacted);
+
 
 
         String DIRECTED = "DIRECTED";
          HashMap<String, String> EC = new HashMap<>();
         EC.put("role", "string");
-        Relacion dir = new Relacion(DIRECTED);
 
 
          String rated = "RATED";
             HashMap<String, String> ratin = new HashMap<>();
         EC.put("rating", "0.5");
-         EC.put("timestamp", "2024-12-1");
+        EC.put("timestamp", "2024-12-1");
 
 
-         String genre = "in_genre";
+        String genre = "in_genre";
 
-         Relacion rateds = new Relacion(rated);
-         rateds.setAtributos(ratin);
 
 
 
@@ -222,6 +240,36 @@ public class App {
 						System.out.println("Finding user based on review...");
 						var foundUser = findUserBasedOnReview(driver, relations[0]);
 						System.out.println("Found user: " + foundUser.Name + " " + foundUser.UserId);
+
+
+
+           System.out.println("Inciso 4...");
+           String pers = concatenateAttributes(personAttributes);
+           String d = concatenateAttributes(personAttributesD);
+
+          
+          String s = concatenateAttributes(personAttributesA);
+          String mv = concatenateAttributes(movieAttributes);
+          String genresss = concatenateAttributes(personAttributesG);
+
+          String userss = concatenateAttributes(useratt);
+          String rel = concatenateAttributes(relacted);
+          String ec = concatenateAttributes(EC);
+          String rat = concatenateAttributes(ratin);
+
+
+
+
+          creategen(driver, nodo_name1, pers, DIRECTED, ec, nodo_name14, mv);
+          creategen(driver, nodo_name1, pers, relacion1, rel, nodo_name14, mv);
+
+          creategen(driver, nodo_name13, d, DIRECTED, ec, nodo_name14, mv);
+          creategen(driver, nodo_name12, s, relacion1, rel, nodo_name14, mv);
+
+          creategen(driver, nodo_name146, userss, rated, rat, nodo_name14, mv);
+
+          creategen(driver, nodo_name14, mv, genre, "", nodo_name145, genresss);
+
         }
     }
 }
